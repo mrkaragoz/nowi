@@ -2,12 +2,13 @@
 
 from enum import IntEnum
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 # os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "HIDE"
 import pygame  # pylint: disable=wrong-import-position
 
 from cardlib import InputCard, MetaCard
+from app import App
 
 
 class MouseButton(IntEnum):
@@ -16,33 +17,6 @@ class MouseButton(IntEnum):
     LEFT = 1
     MIDDLE = 2
     RIGHT = 3
-
-
-class App:
-    """A class that holds current status of the application"""
-
-    middle_mouse_down: bool = False
-    middle_mouse_down_pos: Tuple[int, int] = (0, 0)
-
-    def __init__(self):
-        pass
-
-    def set_middle_mouse_down_status(self, status, pos) -> None:
-        """Set the status of the middle mouse button"""
-        self.middle_mouse_down = status
-        self.middle_mouse_down_pos = pos
-
-    def set_middle_mouse_down_pos(self, pos) -> None:
-        """Set the position of the middle mouse button"""
-        self.middle_mouse_down_pos = pos
-
-    def get_middle_mouse_down_status(self) -> bool:
-        """Get the status of the middle mouse button"""
-        return self.middle_mouse_down
-
-    def get_middle_mouse_down_pos(self) -> Tuple[int, int]:
-        """Get the position of the middle mouse button"""
-        return self.middle_mouse_down_pos
 
 
 def main() -> None:
@@ -64,7 +38,7 @@ def main() -> None:
     screen = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE)
     clock = pygame.time.Clock()
 
-    pygame.display.set_caption("Node Based Graph Wizard v0.1")
+    pygame.display.set_caption(f"Node Based Graph Wizard v{app.get_version}")
 
     cards: List[MetaCard] = []
 
@@ -81,12 +55,13 @@ def main() -> None:
         for event in pygame.event.get():
             match event.type:
                 # ----------------------------------------------
-                # KEYBOARD BUTTON DOWN
+                # KEYBOARD BUTTON DOWN EVENT
                 # ----------------------------------------------
                 case pygame.KEYDOWN:
                     match event.key:
                         # --------------------------------------
-                        # DEBUG KEY
+                        # [D] DEBUG KEY:
+                        # Print a debug info on terminal
                         # --------------------------------------
                         case pygame.K_d:
                             print("----------------------")
@@ -100,7 +75,7 @@ def main() -> None:
                                 print("- - - - - - - - - - - -")
                             print("----------------------")
                 # ----------------------------------------------
-                # MOUSE BUTTON DOWN
+                # MOUSE BUTTON DOWN EVENT
                 # ----------------------------------------------
                 case pygame.MOUSEBUTTONDOWN:
                     match event.button:
@@ -128,16 +103,11 @@ def main() -> None:
                         case MouseButton.RIGHT:
                             for card in cards:
                                 if card.get_rect().collidepoint(event.pos):
-                                    # print("----------------------")
-                                    # print("Event: Mouse Button Right Clicked")
-                                    # print(f"Card: {card}")
-                                    # print(f"Buttons: {card.buttons}")
-                                    # print("----------------------")
                                     for button in card.buttons:
                                         if button.get_rect().collidepoint(event.pos):
                                             button.click()
                 # ----------------------------------------------
-                # BUTTON UP
+                # BUTTON UP EVENT
                 # ----------------------------------------------
                 case pygame.MOUSEBUTTONUP:
                     if (
@@ -147,39 +117,58 @@ def main() -> None:
                         print("Middle Mouse Button Released")
                         app.set_middle_mouse_down_status(False, event.pos)
                 # ----------------------------------------------
-                # MOUSE MOTION
+                # MOUSE MOTION EVENT
                 # ----------------------------------------------
                 case pygame.MOUSEMOTION:
+                    # ------------------------------------------
+                    # SCREEN DRAGGING WITH MIDDLE MOUSE BUTTON
+                    # ------------------------------------------
                     if app.get_middle_mouse_down_status():
                         for card in cards:
                             card.update_card_pos(
                                 app.get_middle_mouse_down_pos(),
                                 event.pos,
                             )
+                        app.set_screen_drag(
+                            app.get_middle_mouse_down_pos(),
+                            event.pos,
+                        )
                         app.set_middle_mouse_down_pos(event.pos)
+                    # ------------------------------------------
+                    # HIGHLIGHTING CARD AND BUTTONS
+                    # ------------------------------------------
+                    # Find the cards that collide with the mouse position and
+                    # highlight the card that has biggest z_order
+                    card_to_be_highlighted: MetaCard | None = None
                     for card in cards:
+                        # Set all card and button highlight to false
+                        card.set_highlight(False)
+                        for button in card.buttons:
+                            button.set_highlight(False)
+                        # Find the card that collides with the mouse position
                         if card.get_rect().collidepoint(event.pos):
-                            # print("----------------------")
-                            # print("Event: Mouse Moved")
-                            # print(f"Card: {card}")
-                            # print(f"Buttons: {card.buttons}")
-                            # print("----------------------")
-                            card.set_highlight(True)
-                            for button in card.buttons:
-                                # print(button)
-                                if button.get_rect().collidepoint(event.pos):
-                                    button.set_highlight(True)
-                                else:
-                                    button.set_highlight(False)
-                        else:
-                            card.set_highlight(False)
+                            if card_to_be_highlighted is None:
+                                card_to_be_highlighted = card
+                            elif (
+                                card_to_be_highlighted is not None
+                                and card.z_order > card_to_be_highlighted.z_order
+                            ):
+                                card_to_be_highlighted = card
+                    # Highlight the card that has biggest z_order
+                    if card_to_be_highlighted is not None:
+                        card_to_be_highlighted.set_highlight(True)
+                        for button in card_to_be_highlighted.buttons:
+                            if button.get_rect().collidepoint(event.pos):
+                                button.set_highlight(True)
+                            else:
+                                button.set_highlight(False)
                 # ----------------------------------------------
-                # QUIT
+                # QUIT EVENT
                 # ----------------------------------------------
                 case pygame.QUIT:
                     running = False
                 # ----------------------------------------------
-                # WINDOW RESIZED OR WINDOW SIZE CHANGED
+                # WINDOW RESIZED OR WINDOW SIZE CHANGED EVENT
                 # ----------------------------------------------
                 case pygame.WINDOWRESIZED | pygame.WINDOWSIZECHANGED:
                     window_width = screen.get_width()
@@ -192,10 +181,18 @@ def main() -> None:
         fps_label = font_consolamono_16.render(
             f"FPS: {clock.get_fps():.0f}", True, (0, 0, 0)
         )
-        screen.blit(fps_label, (window_width - 50, 10))
+        coordinate_label = font_consolamono_16.render(
+            f"X: {app.get_screen_drag()[0]}, Y: {app.get_screen_drag()[1]}",
+            True,
+            (0, 0, 0),
+        )
 
         for card in cards:
             card.draw(screen)
+
+        screen.blit(fps_label, (window_width - 50, 10))
+        screen.blit(coordinate_label, (window_width - 100, window_height - 20))
+
         pygame.display.update()
 
     pygame.quit()

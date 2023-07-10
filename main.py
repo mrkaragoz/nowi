@@ -193,15 +193,16 @@ def main() -> None:
         clock.tick(60)
 
         fps_label = font_consolamono_16.render(
-            f"FPS: {clock.get_fps():.0f}", True, (0, 0, 0)
+            f"FPS: {clock.get_fps():.0f}", True, (240, 240, 240)
         )
         coordinate_label = font_consolamono_16.render(
             f"X: {app.get_screen_drag()[0]}, Y: {app.get_screen_drag()[1]}",
             True,
-            (0, 0, 0),
+            (240, 240, 240),
         )
 
-        screen.fill((248, 241, 215))
+        # screen.fill((248, 241, 215))
+        screen.fill((33, 40, 48))
 
         for card in cards:
             card.draw(screen)

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Tuple
 from uuid import uuid4
 import itertools
+from tkinter import filedialog
 
 import pygame
 
@@ -61,10 +62,7 @@ class MetaCard:
     def __str__(self) -> str:
         return f"Type: Card [{self.__class__.__name__}], Title: {self.title}, UUID: {self.uuid}, z_order: {self.z_order}"
 
-    def draw(
-        self,
-        win,
-    ) -> None:
+    def draw(self, win) -> None:
         """New draw function"""
 
         # Draw card border
@@ -165,14 +163,20 @@ class InputCard(MetaCard):
                 "Choose File...",
                 10,
                 40,
-                callback=lambda: print("Choose File button clicked"),
+                False,
+                callback=filedialog.askopenfilename,
+                callback_args=[],
+                callback_kwargs={},
             ),
             StandartButton(
                 self,
                 "Refresh",
                 10,
                 70,
+                True,
                 callback=lambda: print("Refresh button clicked"),
+                callback_args=[],
+                callback_kwargs={},
             ),
         ]
 

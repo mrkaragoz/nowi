@@ -8,6 +8,7 @@ from typing import List
 import pygame  # pylint: disable=wrong-import-position
 
 from cardlib import InputCard, MetaCard
+from menubar import MenuBar
 from app import App
 
 
@@ -36,6 +37,10 @@ def main() -> None:
         font_path.joinpath("consolamono.ttf").as_posix(), 16
     )
     screen = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE)
+
+    menubar_height: int = 25
+    menubar = MenuBar(menubar_height)
+
     clock = pygame.time.Clock()
 
     pygame.display.set_caption(f"Node Based Graph Wizard v{app.get_version}")
@@ -134,34 +139,44 @@ def main() -> None:
                             event.pos,
                         )
                         app.set_middle_mouse_down_pos(event.pos)
-                    # ------------------------------------------
-                    # HIGHLIGHTING CARD AND BUTTONS
-                    # ------------------------------------------
-                    # Find the cards that collide with the mouse position and
-                    # highlight the card that has biggest z_order
-                    card_to_be_highlighted: MetaCard | None = None
-                    for card in cards:
-                        # Set all card and button highlight to false
-                        card.set_highlight(False)
-                        for button in card.buttons:
-                            button.set_highlight(False)
-                        # Find the card that collides with the mouse position
-                        if card.get_rect().collidepoint(event.pos):
-                            if card_to_be_highlighted is None:
-                                card_to_be_highlighted = card
-                            elif (
-                                card_to_be_highlighted is not None
-                                and card.z_order > card_to_be_highlighted.z_order
-                            ):
-                                card_to_be_highlighted = card
-                    # Highlight the card that has biggest z_order
-                    if card_to_be_highlighted is not None:
-                        card_to_be_highlighted.set_highlight(True)
-                        for button in card_to_be_highlighted.buttons:
-                            if button.get_rect().collidepoint(event.pos):
-                                button.set_highlight(True)
-                            else:
+                    if event.pos[1] > menubar_height:
+                        # ------------------------------------------
+                        # HIGHLIGHTING CARD AND BUTTONS
+                        # ------------------------------------------
+                        # Find the cards that collide with the mouse position and
+                        # highlight the card that has biggest z_order
+                        card_to_be_highlighted: MetaCard | None = None
+                        for card in cards:
+                            # Set all card and button highlight to false
+                            card.set_highlight(False)
+                            for button in card.buttons:
                                 button.set_highlight(False)
+                            # Find the card that collides with the mouse position
+                            if card.get_rect().collidepoint(event.pos):
+                                if card_to_be_highlighted is None:
+                                    card_to_be_highlighted = card
+                                elif (
+                                    card_to_be_highlighted is not None
+                                    and card.z_order > card_to_be_highlighted.z_order
+                                ):
+                                    card_to_be_highlighted = card
+                        # Highlight the card that has biggest z_order
+                        if card_to_be_highlighted is not None:
+                            card_to_be_highlighted.set_highlight(True)
+                            for button in card_to_be_highlighted.buttons:  # type: ignore
+                                if button.get_rect().collidepoint(event.pos):
+                                    button.set_highlight(True)
+                                else:
+                                    button.set_highlight(False)
+                    else:
+                        # ------------------------------------------
+                        # MENUBAR ON HOVER EFFECTS
+                        # ------------------------------------------
+                        for menu_item in menubar.menu_items:
+                            if menu_item.get_rect().collidepoint(event.pos):
+                                menu_item.set_highlight(True)
+                            else:
+                                menu_item.set_highlight(False)
                 # ----------------------------------------------
                 # QUIT EVENT
                 # ----------------------------------------------
@@ -176,7 +191,6 @@ def main() -> None:
                     pygame.display.update()
 
         clock.tick(60)
-        screen.fill((248, 241, 215))
 
         fps_label = font_consolamono_16.render(
             f"FPS: {clock.get_fps():.0f}", True, (0, 0, 0)
@@ -187,11 +201,15 @@ def main() -> None:
             (0, 0, 0),
         )
 
+        screen.fill((248, 241, 215))
+
         for card in cards:
             card.draw(screen)
 
-        screen.blit(fps_label, (window_width - 50, 10))
+        screen.blit(fps_label, (window_width - 50, 30))
         screen.blit(coordinate_label, (window_width - 100, window_height - 20))
+
+        menubar.draw(screen)
 
         pygame.display.update()
 

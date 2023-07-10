@@ -12,7 +12,7 @@ class MenuBar:
     data_path: Path = Path("data")
     font_path: Path = data_path.joinpath("fonts")
 
-    item_margin: int = 5
+    item_margin: int = 4
 
     background_color: Tuple[int, int, int] = (31, 31, 31)
 
@@ -59,7 +59,7 @@ class MenuItem:
     background_highlighted_color: Tuple[int, int, int] = (51, 51, 51)
     label_highlighted_color: Tuple[int, int, int] = (121, 121, 121)
 
-    label_padding: int = 5
+    label_padding: int = 8
 
     def __init__(self, order, label: str, menubar_height, action: Callable):
         self.uuid: str = str(uuid4())
@@ -69,7 +69,7 @@ class MenuItem:
         self.label: str = label
         self.highlighted: bool = False
         self.menubar_height: int = menubar_height
-        self.text: pygame.Surface = pygame.font.SysFont(
+        self.text_surf: pygame.Surface = pygame.font.SysFont(
             self.font_path.joinpath("ConsolaMono-Book.ttf").as_posix(),
             int(menubar_height * 0.64),
             False,
@@ -78,8 +78,8 @@ class MenuItem:
             True,
             self.label_color if not self.highlighted else self.label_highlighted_color,
         )
-        self.width: int = self.text.get_width() + self.label_padding * 2
-        self.label_height: int = self.text.get_height()
+        self.width: int = self.text_surf.get_width() + self.label_padding * 2
+        self.label_height: int = self.text_surf.get_height()
         self.action: Callable = action
 
     def draw(self) -> pygame.Surface:
@@ -95,7 +95,7 @@ class MenuItem:
             else self.background_highlighted_color
         )
         menubar_item_surf.blit(
-            self.text,
+            self.text_surf,
             (
                 self.label_padding,
                 (self.menubar_height - menubar_item_label_heigth) / 2,

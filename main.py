@@ -49,9 +49,6 @@ def main() -> None:
 
     running: bool = True
 
-    # TODO: Remove counter
-    counter: int = 0
-
     while running:
 
         ########################################################################
@@ -78,6 +75,10 @@ def main() -> None:
                                 for button in card.buttons:
                                     print(button)
                                 print("- - - - - - - - - - - -")
+                                print("Labels:")
+                                for label in card.labels:
+                                    print(label)
+                                print("- - - - - - - - - - - -")
                             print("----------------------")
                 # ----------------------------------------------
                 # MOUSE BUTTON DOWN EVENT
@@ -88,14 +89,7 @@ def main() -> None:
                         # LEFT MOUSE BUTTON
                         # --------------------------------------
                         case MouseButton.LEFT:
-                            cards.append(
-                                InputCard(
-                                    f"File Input {counter}",
-                                    event.pos[0],
-                                    event.pos[1],
-                                )
-                            )
-                            counter += 1
+                            app.set_left_mouse_button_down_status(True, event.pos)
                         # --------------------------------------
                         # MIDDLE MOUSE BUTTON
                         # --------------------------------------
@@ -115,12 +109,18 @@ def main() -> None:
                 # BUTTON UP EVENT
                 # ----------------------------------------------
                 case pygame.MOUSEBUTTONUP:
-                    if (
-                        event.button == MouseButton.MIDDLE
-                        and app.get_middle_mouse_down_status()
-                    ):
-                        print("Middle Mouse Button Released")
-                        app.set_middle_mouse_down_status(False, event.pos)
+                    match event.button:
+                        # --------------------------------------
+                        # LEFT MOUSE BUTTON
+                        # --------------------------------------
+                        case MouseButton.LEFT:
+                            app.set_left_mouse_button_down_status(False, event.pos)
+                        # --------------------------------------
+                        # MIDDLE MOUSE BUTTON
+                        # --------------------------------------
+                        case MouseButton.MIDDLE:
+                            if app.get_middle_mouse_down_status():
+                                app.set_middle_mouse_down_status(False, event.pos)
                 # ----------------------------------------------
                 # MOUSE MOTION EVENT
                 # ----------------------------------------------

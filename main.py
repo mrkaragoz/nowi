@@ -201,7 +201,7 @@ def main() -> None:
             (0, 0, 0),
         )
 
-        screen.fill((248, 241, 215))
+        screen.fill((33, 40, 48))
 
         for card in cards:
             card.draw(screen)

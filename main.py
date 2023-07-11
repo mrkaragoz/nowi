@@ -203,6 +203,36 @@ def main() -> None:
 
         screen.fill((33, 40, 48))
 
+        # ---------------------------------------------------
+        # DRAW LINES
+        # ---------------------------------------------------
+        pygame.draw.line(
+            screen,
+            (120, 120, 120),
+            (
+                0 + app.screen_drag_x + window_width / 2,
+                -1000 + app.screen_drag_y + window_height / 2,
+            ),
+            (
+                0 + app.screen_drag_x + window_width / 2,
+                1000 + app.screen_drag_y + window_height / 2,
+            ),
+            1,
+        )
+        pygame.draw.line(
+            screen,
+            (120, 120, 120),
+            (
+                -1000 + app.screen_drag_x + window_width / 2,
+                0 + app.screen_drag_y + window_height / 2,
+            ),
+            (
+                1000 + app.screen_drag_x + window_width / 2,
+                0 + app.screen_drag_y + window_height / 2,
+            ),
+            1,
+        )
+
         for card in cards:
             card.draw(screen)
 

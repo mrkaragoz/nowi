@@ -7,6 +7,7 @@ from tkinter import filedialog
 import pygame
 
 from buttonlib import MetaButton, StandartButton
+from labellib import MetaLabel, Label
 
 
 class MetaCard:
@@ -36,6 +37,7 @@ class MetaCard:
         title_bar_font_color,
         body_background_color,
         buttons,
+        labels,
     ):
         self.uuid: str = str(uuid4())
         self.z_order: int = next(self.z_order_iter)
@@ -54,6 +56,7 @@ class MetaCard:
         self.title_bar_font_color: Tuple[int, int, int] = title_bar_font_color
         self.body_background_color: Tuple[int, int, int] = body_background_color
         self.buttons: List[MetaButton] = buttons
+        self.labels: List[MetaLabel] = labels
 
         self.title_bar_font = pygame.font.SysFont(
             self.font_path.joinpath("consolamono.ttf").as_posix(), 14
@@ -111,6 +114,11 @@ class MetaCard:
         for button in self.buttons:
             button_render = button.draw()
             self.surf.blit(button_render, (button.rel_coord_x, button.rel_coord_y))
+
+        # Draw labels if any exist
+        for label in self.labels:
+            label_render = label.draw()
+            self.surf.blit(label_render, (label.rel_coord_x, label.rel_coord_y))
 
         win.blit(self.surf, (self.coord_x, self.coord_y))
 
@@ -180,6 +188,14 @@ class InputCard(MetaCard):
             ),
         ]
 
+        self.labels: List[MetaLabel] = [
+            Label(
+                "Test",
+                10,
+                100,
+            )
+        ]
+
         super().__init__(
             title,
             self.width,
@@ -193,4 +209,5 @@ class InputCard(MetaCard):
             self.title_bar_font_color,
             self.body_background_color,
             self.buttons,
+            self.labels,
         )

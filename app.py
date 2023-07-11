@@ -4,8 +4,11 @@ from typing import Tuple
 class App:
     """A class that holds current status of the application"""
 
-    middle_mouse_down: bool = False
-    middle_mouse_down_pos: Tuple[int, int] = (0, 0)
+    left_mouse_button_down: bool = False
+    left_mouse_button_down_pos: Tuple[int, int] = (0, 0)
+
+    middle_mouse_button_down: bool = False
+    middle_mouse_button_down_pos: Tuple[int, int] = (0, 0)
 
     version_major: int = 0
     version_minor: int = 1
@@ -17,22 +20,27 @@ class App:
     def __init__(self):
         pass
 
+    def set_left_mouse_button_down_status(self, status, pos) -> None:
+        """Set the status of the left mouse button"""
+        self.left_mouse_button_down = status
+        self.left_mouse_button_down_pos = pos
+
     def set_middle_mouse_down_status(self, status, pos) -> None:
         """Set the status of the middle mouse button"""
-        self.middle_mouse_down = status
-        self.middle_mouse_down_pos = pos
+        self.middle_mouse_button_down = status
+        self.middle_mouse_button_down_pos = pos
 
     def set_middle_mouse_down_pos(self, pos) -> None:
         """Set the position of the middle mouse button"""
-        self.middle_mouse_down_pos = pos
+        self.middle_mouse_button_down_pos = pos
 
     def get_middle_mouse_down_status(self) -> bool:
         """Get the status of the middle mouse button"""
-        return self.middle_mouse_down
+        return self.middle_mouse_button_down
 
     def get_middle_mouse_down_pos(self) -> Tuple[int, int]:
         """Get the position of the middle mouse button"""
-        return self.middle_mouse_down_pos
+        return self.middle_mouse_button_down_pos
 
     def set_screen_drag(self, starting_pos, current_pos) -> None:
         """Set the screen drag value"""

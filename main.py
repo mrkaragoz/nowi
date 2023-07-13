@@ -45,8 +45,6 @@ def main() -> None:
 
     pygame.display.set_caption(f"Node Based Graph Wizard v{app.get_version}")
 
-    cards: List[MetaCard] = []
-
     running: bool = True
 
     while running:
@@ -69,7 +67,7 @@ def main() -> None:
                             print("----------------------")
                             print("Event: Debug Key Pressed")
                             print("Cards:")
-                            for card in cards:
+                            for card in app.cards:
                                 print(card)
                                 print("Buttons:")
                                 for button in card.buttons:
@@ -90,6 +88,10 @@ def main() -> None:
                         # --------------------------------------
                         case MouseButton.LEFT:
                             app.set_left_mouse_button_down_status(True, event.pos)
+                            if event.pos[1] <= menubar_height:
+                                for menu_item in menubar.menu_items:
+                                    if menu_item.get_rect().collidepoint(event.pos):
+                                        menu_item.click()
                         # --------------------------------------
                         # MIDDLE MOUSE BUTTON
                         # --------------------------------------
@@ -100,7 +102,7 @@ def main() -> None:
                         # RIGHT MOUSE BUTTON
                         # --------------------------------------
                         case MouseButton.RIGHT:
-                            for card in cards:
+                            for card in app.cards:
                                 if card.get_rect().collidepoint(event.pos):
                                     for button in card.buttons:
                                         if button.get_rect().collidepoint(event.pos):
@@ -129,7 +131,7 @@ def main() -> None:
                     # SCREEN DRAGGING WITH MIDDLE MOUSE BUTTON
                     # ------------------------------------------
                     if app.get_middle_mouse_down_status():
-                        for card in cards:
+                        for card in app.cards:
                             card.update_card_pos(
                                 app.get_middle_mouse_down_pos(),
                                 event.pos,
@@ -146,7 +148,7 @@ def main() -> None:
                         # Find the cards that collide with the mouse position and
                         # highlight the card that has biggest z_order
                         card_to_be_highlighted: MetaCard | None = None
-                        for card in cards:
+                        for card in app.cards:
                             # Set all card and button highlight to false
                             card.set_highlight(False)
                             for button in card.buttons:
@@ -177,6 +179,17 @@ def main() -> None:
                                 menu_item.set_highlight(True)
                             else:
                                 menu_item.set_highlight(False)
+                                if menu_item.open:
+                                    for child_menu_item in menu_item.children:
+                                        child_menu_item.set_highlight(False)
+                                        if child_menu_item.get_rect().collidepoint(
+                                            event.pos
+                                        ):
+                                            child_menu_item.set_highlight(True)
+                                            print(
+                                                f"Child highlighted: {child_menu_item.label}"
+                                            )
+
                 # ----------------------------------------------
                 # QUIT EVENT
                 # ----------------------------------------------
@@ -211,11 +224,11 @@ def main() -> None:
             (120, 120, 120),
             (
                 0 + app.screen_drag_x + window_width / 2,
-                -1000 + app.screen_drag_y + window_height / 2,
+                -1e5 + app.screen_drag_y + window_height / 2,
             ),
             (
                 0 + app.screen_drag_x + window_width / 2,
-                1000 + app.screen_drag_y + window_height / 2,
+                1e5 + app.screen_drag_y + window_height / 2,
             ),
             1,
         )
@@ -233,7 +246,7 @@ def main() -> None:
             1,
         )
 
-        for card in cards:
+        for card in app.cards:
             card.draw(screen)
 
         screen.blit(fps_label, (window_width - 50, 30))

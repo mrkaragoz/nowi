@@ -1,13 +1,20 @@
+import itertools
+from enum import Enum
 from pathlib import Path
+from tkinter import filedialog
 from typing import List, Tuple
 from uuid import uuid4
-import itertools
-from tkinter import filedialog
 
 import pygame
 
 from buttonlib import MetaButton, StandartButton
-from labellib import MetaLabel, Label
+from labellib import Label, MetaLabel
+
+
+class CardType(Enum):
+    """Enum for card types"""
+
+    INPUTCARD = 1
 
 
 class MetaCard:

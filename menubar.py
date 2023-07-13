@@ -1,12 +1,15 @@
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, List, Tuple, Self
+from typing import Any, Callable, Dict, List, Self, Tuple
 from uuid import uuid4
 
 import pygame
 
+from app import App
+from cardlib import CardType
 
-class MenuBar:
+
+class MenuBar(App):
     """MenuBar class"""
 
     data_path: Path = Path("data")
@@ -18,24 +21,25 @@ class MenuBar:
 
     def __init__(self, height: int):
         self.height = height
-        file_menu: MenuItem = MenuItem(self, 0, "File", lambda: None)
-        file_menu.add_child(MenuItem(self, 0, "New Project", lambda: None))
+        add_input_card_menu: MenuItem = MenuItem(
+            self, 0, "Input Card", self.add_card, args=[CardType.INPUTCARD], kwargs={}
+        )
 
         self.menu_items: List[MenuItem] = [
-            file_menu,
-            MenuItem(self, 1, "Edit", lambda: None),
-            MenuItem(self, 2, "Selection", lambda: None),
-            MenuItem(self, 3, "View", lambda: None),
-            MenuItem(self, 4, "Go", lambda: None),
-            MenuItem(self, 5, "Run", lambda: None),
-            MenuItem(self, 6, "Terminal", lambda: None),
-            MenuItem(self, 7, "Help", lambda: None),
+            add_input_card_menu,
+            MenuItem(self, 1, "Exit", print, args=["Exit Clicked"], kwargs={}),
         ]
+
         dist_from_left: int = 0
         for menu_item in sorted(self.menu_items, key=lambda x: x.order):
             menu_item.abs_coord_x = dist_from_left
             menu_item.abs_coord_y = 0
             dist_from_left += menu_item.get_width() + self.item_margin
+            for child in menu_item.children:
+                child.abs_coord_x = menu_item.abs_coord_x
+                child.abs_coord_y = self.height + child.order * 25
+                child.width = 200
+                print(child.abs_coord_x, child.abs_coord_y)
 
     def draw(self, win: pygame.Surface) -> None:
         """Draws the menu bar"""
@@ -46,6 +50,30 @@ class MenuBar:
             menubar_surf.blit(
                 menu_item.draw(), (menu_item.abs_coord_x, menu_item.abs_coord_y)
             )
+
+        for menu_item in self.menu_items:
+            if menu_item.open:
+                child_menu_surf = pygame.Surface((200, 25 * len(menu_item.children)))
+                for i, child in enumerate(menu_item.children):
+                    pygame.draw.rect(
+                        child_menu_surf,
+                        child.background_color,
+                        (
+                            0,
+                            i * 25,
+                            200,
+                            25,
+                        ),
+                    )
+                    child_menu_surf.blit(
+                        child.text_surf,
+                        (15, i * 25 + (25 - child.text_surf.get_height()) / 2),
+                    )
+
+                win.blit(
+                    child_menu_surf,
+                    (menu_item.abs_coord_x, menu_item.abs_coord_y + self.height),
+                )
 
         win.blit(menubar_surf, (0, 0))
 
@@ -64,7 +92,15 @@ class MenuItem:
 
     label_padding: int = 8
 
-    def __init__(self, menubar: MenuBar, order: int, label: str, action: Callable):
+    def __init__(
+        self,
+        menubar: MenuBar,
+        order: int,
+        label: str,
+        action: Callable,
+        args: List[Any],
+        kwargs: Dict[str, Any],
+    ):
         self.uuid: str = str(uuid4())
         self.order: int = order
         self.abs_coord_x: int = 0
@@ -84,11 +120,14 @@ class MenuItem:
         self.width: int = self.text_surf.get_width() + self.label_padding * 2
         self.label_height: int = self.text_surf.get_height()
         self.action: Callable = action
-        self.childs: List[Self] = []
+        self.args = args
+        self.kwargs = kwargs
+        self.children: List[Self] = []
+        self.open: bool = False
 
     def add_child(self, child: Self):
         """Adds a chield to the menu item"""
-        self.childs.append(child)
+        self.children.append(child)
 
     def draw(self) -> pygame.Surface:
         """Draws the menu item"""
@@ -110,6 +149,14 @@ class MenuItem:
             ),
         )
         return menubar_item_surf
+
+    def click(self) -> None:
+        """Executes the action of the menu item"""
+        self.action(*self.args, **self.kwargs)
+
+    def close(self) -> None:
+        """Closes the menu at the given order"""
+        self.open = False
 
     @lru_cache(maxsize=16)
     def get_width(self) -> int:

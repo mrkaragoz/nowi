@@ -1,4 +1,6 @@
-from typing import Tuple
+from typing import List, Tuple
+
+from cardlib import InputCard, MetaCard, CardType
 
 
 class App:
@@ -17,8 +19,22 @@ class App:
     screen_drag_x: int = 0
     screen_drag_y: int = 0
 
+    cards: List[MetaCard] = []
+
     def __init__(self):
         pass
+
+    def add_card(self, card: CardType) -> None:
+        """Add a card to the application"""
+        print("Add card function called")
+
+        if not card in CardType:
+            raise TypeError("Card must be of type CardType")
+
+        match card:
+            case CardType.INPUTCARD:
+                print("Card added as an input card")
+                self.cards.append(InputCard("Input Card", 300, 300))
 
     def set_left_mouse_button_down_status(self, status, pos) -> None:
         """Set the status of the left mouse button"""

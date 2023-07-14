@@ -21,22 +21,27 @@ class MetaLabel:
         font_color,
         font_size,
     ):
-        self.uuid = uuid
+        self.uuid: str = uuid
         self.label = label
         self.rel_coord_x = rel_coord_x
         self.rel_coord_y = rel_coord_y
         self.font_name = font_name
         self.font_color = font_color
         self.font_size = font_size
+        self.hidden: bool = False
 
         if not self.font_path.joinpath(font_name).exists:
             raise FileNotFoundError(f"Font {font_name} not found")
         self.font = pygame.font.SysFont(
-            self.font_path.joinpath(font_name).as_posix(), font_size
+            self.font_path.joinpath(font_name).as_posix(), font_size, False
         )
 
     def __str__(self):
         return f"{self.uuid}: {self.label}"
+
+    def hide(self) -> None:
+        """Hide label"""
+        self.hidden = True
 
     def draw(self) -> pygame.Surface:
         """Draw label"""
@@ -50,8 +55,6 @@ class Label(MetaLabel):
     font_name: str = "ConsolaMono-Book.ttf"
     font_color: Tuple[int, int, int] = (0, 0, 0)
     font_size: int = 16
-
-    hidden: bool = False
 
     def __init__(self, label, rel_coord_x, rel_coord_y):
         self.uuid: str = str(uuid4())

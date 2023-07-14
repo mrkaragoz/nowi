@@ -29,6 +29,7 @@ class MetaButton:
         font_size: int,
         border_thickness: int,
         disabled: bool,
+        hidden: bool,
         callback: Callable,
         callback_args: List[Any],
         callback_kwargs: Dict[str, Any],
@@ -62,6 +63,7 @@ class MetaButton:
         self.surf_height = self.height + border_thickness * 2
         self.surf = pygame.Surface((self.surf_width, self.surf_height))
         self.disabled = disabled
+        self.hidden = hidden
         self.callback = callback
         self.callback_args = callback_args
         self.callback_kwargs = callback_kwargs
@@ -91,7 +93,7 @@ class MetaButton:
             return
         print(f"Button [{self.uuid}] {self.text} clicked")
         print(f"Parent card: {self.parent_card}")
-        print(self.callback(*self.callback_args, **self.callback_kwargs))
+        ret = self.callback(*self.callback_args, **self.callback_kwargs)
 
     def set_highlight(self, status: bool) -> None:
         """Set highlight state"""
@@ -131,6 +133,10 @@ class MetaButton:
 
         return self.surf
 
+    def hide(self) -> None:
+        """Hide button"""
+        self.hidden = True
+
 
 class StandartButton(MetaButton):
     """Standart Button"""
@@ -151,6 +157,7 @@ class StandartButton(MetaButton):
         rel_coord_x: int,
         rel_coord_y: int,
         disabled: bool,
+        hidden: bool,
         callback: Callable,
         callback_args: List[Any],
         callback_kwargs: Dict[str, Any],
@@ -169,6 +176,7 @@ class StandartButton(MetaButton):
             self.font_size,
             self.border_thickness,
             disabled,
+            hidden,
             callback,
             callback_args,
             callback_kwargs,

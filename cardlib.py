@@ -2,13 +2,14 @@ import itertools
 from enum import Enum
 from pathlib import Path
 from tkinter import filedialog
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from uuid import uuid4
 
 import pygame
 
 from buttonlib import MetaButton, StandartButton
 from labellib import Label, MetaLabel
+from nodelib import MetaNode, Node
 
 
 class CardType(Enum):
@@ -45,6 +46,7 @@ class MetaCard:
         body_background_color,
         buttons,
         labels,
+        nodes,
     ):
         self.uuid: str = str(uuid4())
         self.z_order: int = next(self.z_order_iter)
@@ -64,10 +66,13 @@ class MetaCard:
         self.body_background_color: Tuple[int, int, int] = body_background_color
         self.buttons: List[MetaButton] = buttons
         self.labels: List[MetaLabel] = labels
+        self.nodes: List[MetaNode] = nodes
 
-        self.title_bar_font = pygame.font.SysFont(
-            self.font_path.joinpath("consolamono.ttf").as_posix(), 14
+        self.title_bar_font = pygame.font.Font(
+            self.font_path.joinpath("ConsolaMono-Bold.ttf").as_posix(), 10
         )
+
+        self.file: str = ""
 
     def __str__(self) -> str:
         return f"Type: Card [{self.__class__.__name__}], Title: {self.title}, UUID: {self.uuid}, z_order: {self.z_order}"
@@ -117,17 +122,28 @@ class MetaCard:
             0,
         )
 
-        # Draw buttons if any exist
+        # Draw non-hidden buttons if any exist
         for button in self.buttons:
-            button_render = button.draw()
-            self.surf.blit(button_render, (button.rel_coord_x, button.rel_coord_y))
+            if not button.hidden:
+                button_render = button.draw()
+                self.surf.blit(button_render, (button.rel_coord_x, button.rel_coord_y))
 
-        # Draw labels if any exist
+        # Draw non-hidden labels if any exist
         for label in self.labels:
-            label_render = label.draw()
-            self.surf.blit(label_render, (label.rel_coord_x, label.rel_coord_y))
+            if not label.hidden:
+                label_render = label.draw()
+                self.surf.blit(label_render, (label.rel_coord_x, label.rel_coord_y))
+
+        for node in self.nodes:
+            node_render = node.draw()
+            self.surf.blit(node_render, (node.rel_coord_x, node.rel_coord_y))
 
         win.blit(self.surf, (self.coord_x, self.coord_y))
+
+    def update_z_order_to_bring_front(self) -> None:
+        """Update z_order to bring card to front"""
+        # TODO: Only update z_order if card is not already at front
+        self.z_order = next(self.z_order_iter)
 
     def update_card_pos(self, starting_pos, current_pos) -> None:
         """Update Card Position"""
@@ -162,7 +178,7 @@ class InputCard(MetaCard):
     """Input Card"""
 
     width: int = 180
-    height: int = 300
+    height: int = 600
 
     card_border_color = (27, 38, 56)
     card_border_thickness = 2
@@ -175,11 +191,12 @@ class InputCard(MetaCard):
         self.buttons: List[MetaButton] = [
             StandartButton(
                 self,
-                "Choose File...",
+                "Input File...",
                 10,
                 40,
                 False,
-                callback=filedialog.askopenfilename,
+                False,
+                callback=self.read_file,
                 callback_args=[],
                 callback_kwargs={},
             ),
@@ -188,9 +205,10 @@ class InputCard(MetaCard):
                 "Refresh",
                 10,
                 70,
-                True,
-                callback=lambda: print("Refresh button clicked"),
-                callback_args=[],
+                False,
+                False,
+                callback=print,
+                callback_args=["Refresh button clicked"],
                 callback_kwargs={},
             ),
         ]
@@ -202,6 +220,8 @@ class InputCard(MetaCard):
                 100,
             )
         ]
+
+        self.nodes: List[MetaNode] = []
 
         super().__init__(
             title,
@@ -217,4 +237,41 @@ class InputCard(MetaCard):
             self.body_background_color,
             self.buttons,
             self.labels,
+            self.nodes,
         )
+
+    def read_file(self):
+        """Read file"""
+
+        file_path: Path = Path(filedialog.askopenfilename(defaultextension=".txt"))
+
+        if not file_path.exists:
+            raise FileNotFoundError(f"File {file_path} not found")
+
+        row_number: int = 0
+        titles: List[str] = []
+        data: Dict[int, List[float]] = {}
+        with open(file_path, "r", encoding="ISO-8859-9") as file_handle:
+            for row in file_handle:
+                if row_number == 0:
+                    titles = row.split("\t")
+                    titles = [title.strip() for title in titles if title != "\n"]
+                else:
+                    data[row_number] = [
+                        float(value) for value in row.split("\t") if value != "\n"
+                    ]
+                row_number += 1
+
+        # Hide all buttons
+        for button in self.buttons:
+            button.hide()
+
+        # Hide all labels
+        for label in self.labels:
+            label.hide()
+
+        for i, title in enumerate(titles):
+            self.nodes.append(Node(title, 150, 30 + i * 20))
+
+        for i, title in enumerate(titles):
+            self.labels.append(Label(title, 10, 30 + i * 20))

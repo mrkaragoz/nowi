@@ -1,3 +1,5 @@
+# TODO: Move hidden buttons, labels etc. to another list
+
 # pylint: disable=no-member
 
 from enum import IntEnum
@@ -33,8 +35,8 @@ def main() -> None:
     window_height: int = 600
 
     pygame.init()
-    font_consolamono_16 = pygame.font.SysFont(
-        font_path.joinpath("consolamono.ttf").as_posix(), 16
+    font_consolamono_16 = pygame.font.Font(
+        font_path.joinpath("ConsolaMono-Bold.ttf").as_posix(), 12
     )
     screen = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE)
 
@@ -87,11 +89,23 @@ def main() -> None:
                         # LEFT MOUSE BUTTON
                         # --------------------------------------
                         case MouseButton.LEFT:
-                            app.set_left_mouse_button_down_status(True, event.pos)
                             if event.pos[1] <= menubar_height:
                                 for menu_item in menubar.menu_items:
                                     if menu_item.get_rect().collidepoint(event.pos):
                                         menu_item.click()
+                            if event.pos[1] > menubar_height:
+                                for card in app.cards:
+                                    if card.get_rect().collidepoint(event.pos):
+                                        # If only clicked on a card
+                                        app.set_left_mouse_button_down_status(
+                                            True, event.pos
+                                        )
+                                        for button in card.buttons:
+                                            if not button.hidden:
+                                                if button.get_rect().collidepoint(
+                                                    event.pos
+                                                ):
+                                                    button.click()
                         # --------------------------------------
                         # MIDDLE MOUSE BUTTON
                         # --------------------------------------
@@ -102,11 +116,7 @@ def main() -> None:
                         # RIGHT MOUSE BUTTON
                         # --------------------------------------
                         case MouseButton.RIGHT:
-                            for card in app.cards:
-                                if card.get_rect().collidepoint(event.pos):
-                                    for button in card.buttons:
-                                        if button.get_rect().collidepoint(event.pos):
-                                            button.click()
+                            continue
                 # ----------------------------------------------
                 # BUTTON UP EVENT
                 # ----------------------------------------------
@@ -121,7 +131,7 @@ def main() -> None:
                         # MIDDLE MOUSE BUTTON
                         # --------------------------------------
                         case MouseButton.MIDDLE:
-                            if app.get_middle_mouse_down_status():
+                            if app.get_middle_mouse_button_down_status():
                                 app.set_middle_mouse_down_status(False, event.pos)
                 # ----------------------------------------------
                 # MOUSE MOTION EVENT
@@ -130,7 +140,7 @@ def main() -> None:
                     # ------------------------------------------
                     # SCREEN DRAGGING WITH MIDDLE MOUSE BUTTON
                     # ------------------------------------------
-                    if app.get_middle_mouse_down_status():
+                    if app.get_middle_mouse_button_down_status():
                         for card in app.cards:
                             card.update_card_pos(
                                 app.get_middle_mouse_down_pos(),
@@ -141,6 +151,30 @@ def main() -> None:
                             event.pos,
                         )
                         app.set_middle_mouse_down_pos(event.pos)
+                    # ------------------------------------------
+                    # CARD DRAGGING WITH LEFT MOUSE BUTTON
+                    # ------------------------------------------
+                    if app.get_left_mouse_button_down_status():
+                        # Find the cards that collide with the mouse position and
+                        # drag the card that has biggest z_order
+                        card_to_be_dragged: MetaCard | None = None
+                        for card in app.cards:
+                            if card.get_rect().collidepoint(event.pos):
+                                if card_to_be_dragged is None:
+                                    card_to_be_dragged = card
+                                elif card_to_be_dragged is not None:
+                                    if card.z_order > card_to_be_dragged.z_order:
+                                        card_to_be_dragged = card
+                        if card_to_be_dragged is not None:
+                            # Set cards z_order to the highest
+                            card_to_be_dragged.update_z_order_to_bring_front()
+                            app.sort_cards_by_z_order()
+                            card_to_be_dragged.update_card_pos(
+                                app.get_left_mouse_button_down_pos(),
+                                event.pos,
+                            )
+                        app.set_left_mouse_button_down_pos(event.pos)
+                    # - - - - - - - - - - - - - - - - - - - - -
                     if event.pos[1] > menubar_height:
                         # ------------------------------------------
                         # HIGHLIGHTING CARD AND BUTTONS
@@ -236,11 +270,11 @@ def main() -> None:
             screen,
             (120, 120, 120),
             (
-                -1000 + app.screen_drag_x + window_width / 2,
+                -1e5 + app.screen_drag_x + window_width / 2,
                 0 + app.screen_drag_y + window_height / 2,
             ),
             (
-                1000 + app.screen_drag_x + window_width / 2,
+                1e5 + app.screen_drag_x + window_width / 2,
                 0 + app.screen_drag_y + window_height / 2,
             ),
             1,
@@ -249,8 +283,8 @@ def main() -> None:
         for card in app.cards:
             card.draw(screen)
 
-        screen.blit(fps_label, (window_width - 50, 30))
-        screen.blit(coordinate_label, (window_width - 100, window_height - 20))
+        screen.blit(fps_label, (window_width - 75, 30))
+        screen.blit(coordinate_label, (window_width - 125, window_height - 20))
 
         menubar.draw(screen)
 

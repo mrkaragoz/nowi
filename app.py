@@ -26,19 +26,25 @@ class App:
 
     def add_card(self, card: CardType) -> None:
         """Add a card to the application"""
-        print("Add card function called")
 
         if not card in CardType:
             raise TypeError("Card must be of type CardType")
 
         match card:
             case CardType.INPUTCARD:
-                print("Card added as an input card")
                 self.cards.append(InputCard("Input Card", 300, 300))
+
+    def sort_cards_by_z_order(self) -> None:
+        """Sort the cards in the application"""
+        self.cards.sort(key=lambda x: x.z_order)
 
     def set_left_mouse_button_down_status(self, status, pos) -> None:
         """Set the status of the left mouse button"""
         self.left_mouse_button_down = status
+        self.left_mouse_button_down_pos = pos
+
+    def set_left_mouse_button_down_pos(self, pos) -> None:
+        """Set the position of the left mouse button"""
         self.left_mouse_button_down_pos = pos
 
     def set_middle_mouse_down_status(self, status, pos) -> None:
@@ -50,7 +56,15 @@ class App:
         """Set the position of the middle mouse button"""
         self.middle_mouse_button_down_pos = pos
 
-    def get_middle_mouse_down_status(self) -> bool:
+    def get_left_mouse_button_down_status(self) -> bool:
+        """Get the status of the left mouse button"""
+        return self.left_mouse_button_down
+
+    def get_left_mouse_button_down_pos(self) -> Tuple[int, int]:
+        """Get the position of the left mouse button"""
+        return self.left_mouse_button_down_pos
+
+    def get_middle_mouse_button_down_status(self) -> bool:
         """Get the status of the middle mouse button"""
         return self.middle_mouse_button_down
 
